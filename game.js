@@ -530,6 +530,17 @@ function startGame() {
         if (hasFearsomeSkill || hasFearsomeInjury) {
             m.conditions['Fearsome'] = true;
         }
+
+        // 3. Vérification de la compétence Berserker (Condition Frénésie)
+        const hasBerserkerSkill = (m.skills || []).some(s => {
+            let sName = (typeof s === 'string' ? s : (s.name || '')).toLowerCase();
+            let sId = (typeof s === 'object' && s.id) ? s.id : '';
+            return sId === 'sk_berserker' || sName.includes('berserker');
+        });
+
+        if (hasBerserkerSkill) {
+            m.conditions['Frénésie'] = true;
+        }
         
         if (m.weapons) {
             m.weapons.forEach(w => {
