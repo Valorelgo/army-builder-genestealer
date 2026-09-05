@@ -512,7 +512,7 @@ const db = {
     // ===== CONDITIONS =====
     conditions: {
         "Redoutable": "Losqu'il est pris pour cible d'une attaque de corps à corps, l'attaquant fait un jet de Wil. En cas d'échec, sa WS passe à 6+. Les guerriers fearsome ne sont pas affectés, sauf si la cible est terrifying",
-        "Frénésie": "Le guerrier doit déclarer une charge s'il commence son activation à son M + 6\" d'un ennemi. Il devrai charger l'ennemi le plus proche. Ils gagnent +1A",
+        "Frénésie": "Le guerrier doit déclarer une charge s'il commence son activation à son M + 6\" d'un ennemi. Il doit charger l'ennemi le plus proche. Il gagne +1A",
         "Haine": "Quand le guerrier engage, charge ou est la cible des ces actions par une figurine haïe, elle peut relancer les jets pour toucher ratés.",
         "Blessé": "Le guerrier perd toutes ses compétences jusqu'à ce qu'il récupère un point de vie",
         "Intoxiqué": "Le guerrier baisse de 1 ses WS et BS, mais augmente son cool de 1",
@@ -954,21 +954,34 @@ function renderFighterEdit(container) {
             
             <h3>Armes Équipées</h3>
             <div id="weapon-list">
-                ${m.weapons.length === 0 ? '<p>Aucune arme.</p>' : m.weapons.map((w, i) => `
-                    <div style="margin:8px 0; background:#181818; padding:8px; border-radius:4px;">
-                        • <strong>${w.name}</strong> (${w.cost_credits||0}c)
-                        ${w.accessory ? `<br><small style="color:var(--accent-cyan); margin-left:15px;">↳ Accessoire : ${w.accessory.name} ${w.accessory.fromStash ? '<span style="color:#2ecc71;">(Réserve - 0c déduit)</span>' : `(${w.accessory.cost_credits||0}c)`} ${!isBeast && (!isMerc || isHiveScum) ? `<button class="btn-danger" style="padding:2px 6px; font-size:10px; margin-left:5px;" onclick="removeWeaponAccessory(${i})">Retirer accessoire</button>` : ''}</small>` : (!isBeast && (!isMerc || isHiveScum) ? `<br><button style="padding:2px 6px; font-size:11px; margin-left:15px;" onclick="openWeaponAccessoryModal(${i})">+ Ajouter un accessoire</button>` : '')}
-                        <button class="btn-danger" style="float:right; padding:2px 6px; font-size:11px;" onclick="removeWeapon(${i})">Supprimer l'arme</button>
-                        <div style="clear:both;"></div>
+                ${m.weapons.length === 0 ? '<p>Aucune arme.</p>' : m.weapons.map((w, i) => {
+                    let prof = (w.profiles && w.profiles[0]) ? w.profiles[0] : null;
+                    let statsText = prof ? `Portée: ${prof.SR}/${prof.LR} | F:${prof.S} | AP:${prof.AP} | D:${prof.L}${prof.traits ? ` | ${prof.traits}` : ''}` : '';
+                    
+                    return `
+                    <div style="margin:8px 0; background:#181818; padding:8px; border-radius:4px; display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            • <strong>${w.name}</strong> (${w.cost_credits||0}c)
+                            ${statsText ? `<br><small style="color:#aaa; font-size:11px; margin-left:12px;">${statsText}</small>` : ''}
+                            ${w.accessory ? `<br><small style="color:var(--accent-cyan); margin-left:12px;">↳ Accessoire : ${w.accessory.name} ${w.accessory.effect ? `— <em>${w.accessory.effect}</em>` : ''} ${w.accessory.fromStash ? '<span style="color:#2ecc71;">(Réserve - 0c)</span>' : `(${w.accessory.cost_credits||0}c)`} ${!isBeast && (!isMerc || isHiveScum) ? `<button class="btn-danger" style="padding:2px 6px; font-size:10px; margin-left:5px;" onclick="removeWeaponAccessory(${i})">Retirer accessoire</button>` : ''}</small>` : (!isBeast && (!isMerc || isHiveScum) ? `<br><button style="padding:2px 6px; font-size:11px; margin-left:12px; margin-top:4px;" onclick="openWeaponAccessoryModal(${i})">+ Ajouter un accessoire</button>` : '')}
+                        </div>
+                        <button class="btn-danger" style="padding:2px 6px; font-size:11px; flex-shrink:0;" onclick="removeWeapon(${i})">Supprimer</button>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
             <button onclick="openWeaponSelectModal()">+ Ajouter / Échanger une Arme</button>
 
             <h3 style="margin-top:15px;">Armures & Équipements</h3>
             <div id="equip-list">
                 ${m.equipment.length === 0 ? '<p>Aucun équipement.</p>' : m.equipment.map((e, i) => `
-                    <div style="margin:5px 0;">• ${e.name} ${e.fromStash ? '<span style="color:#2ecc71;">(Réserve)</span>' : `(${e.cost_credits||0}c)`} <button class="btn-danger" onclick="removeEquipment(${i})">X</button></div>
+                    <div style="margin:6px 0; background:#181818; padding:6px 8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            • <strong>${e.name}</strong> ${e.fromStash ? '<span style="color:#2ecc71;">(Réserve)</span>' : `(${e.cost_credits||0}c)`}
+                            ${e.effect ? `<br><small style="color:#aaa; font-size:11px; margin-left:12px;">${e.effect}</small>` : ''}
+                        </div>
+                        <button class="btn-danger" style="padding:2px 6px; font-size:11px;" onclick="removeEquipment(${i})">X</button>
+                    </div>
                 `).join('')}
             </div>
             <button onclick="openEquipSelectModal()">+ Ajouter Armure / Équipement</button>
@@ -984,7 +997,7 @@ function renderFighterEdit(container) {
             <h3 style="margin-top:15px;">Compétences</h3>
             <div id="skills-list">
                 ${m.skills.length === 0 ? '<p>Aucune compétence sélectionnée.</p>' : m.skills.map((s, i) => `
-                    <div style="margin:5px 0;">• ${s.name} ${!isBeast && !isMerc ? `<button class="btn-danger" onclick="removeSkill(${i})">X</button>` : ''}</div>
+                    <div style="margin:5px 0;">• ${typeof s === 'string' ? s : s.name} ${!isBeast && !isMerc ? `<button class="btn-danger" onclick="removeSkill(${i})">X</button>` : ''}</div>
                 `).join('')}
             </div>
             ${!isBeast && !isMerc ? `<button onclick="openSkillModal()">Gérer les Compétences</button>` : ''}
@@ -1057,17 +1070,23 @@ function openWeaponSelectModal() {
         });
 
         if (availableWeapons.length === 0) {
-            html += `<p style="color:#888; font-size:12px; margin-bottom:10px;">Aucune arme disponible dans la réserve.</p>`;
+            html += `<p style="color:#888; font-size:12px;">Aucune arme ou amélioration disponible pour ce combattant.</p>`;
         } else {
-            availableWeapons.forEach((stItem) => {
-                let itemName = typeof stItem === 'string' ? stItem : stItem.name;
-                let slotsNeeded = itemName.includes('*') ? 2 : 1;
-                let isAvailable = (usedSlots + slotsNeeded <= maxSlots);
+            availableWeapons.forEach(w => {
+                let slotsNeeded = w.name.includes('*') ? 2 : 1;
+                let isAvailable = (usedSlots + slotsNeeded <= 3);
+                
+                // Formatage du profil de l'arme
+                let prof = (w.profiles && w.profiles[0]) ? w.profiles[0] : null;
+                let statsText = prof ? `Portée: ${prof.SR}/${prof.LR} | F:${prof.S} | AP:${prof.AP} | D:${prof.L}${prof.traits ? ` | ${prof.traits}` : ''}` : '';
 
                 html += `
                     <div class="fighter-item ${!isAvailable ? 'disabled' : ''}">
-                        <span><strong>${itemName}</strong> ${slotsNeeded === 2 ? '<em>(2 emplacements)</em>' : ''} <small style="color:#2ecc71;">(Réserve - 0 cr)</small></span>
-                        ${isAvailable ? `<button class="btn-cyan" onclick="addWeaponFromStash('${itemName}')">Équiper (Stash)</button>` : '<small>Emplacements insuffisants</small>'}
+                        <div>
+                            <strong>${w.name}</strong> (${w.cost_credits||0}c) ${slotsNeeded === 2 ? '<em>(2 emplacements)</em>' : ''}
+                            ${statsText ? `<br><small style="color:#aaa; font-size:11px;">${statsText}</small>` : ''}
+                        </div>
+                        ${isAvailable ? `<button onclick="addWeapon('${w.id}')">${isCampaign ? 'Acheter' : 'Ajouter'}</button>` : '<small>Emplacements insuffisants</small>'}
                     </div>
                 `;
             });
@@ -1114,31 +1133,38 @@ function openWeaponSelectModal() {
     } else {
         // EXCLUSION STRICTE : Clawed arm ne peut JAMAIS être achetée
         const availableWeapons = db.weapons.filter(w => {
-            if (w.id === "wpn_clawed_arm" || w.name === "Clawed arm") return false;
-
-            if (charDef && charDef.melee_only) {
-                let prof = w.profiles && w.profiles[0];
-                let traits = (prof && prof.traits ? prof.traits : "").toLowerCase();
-                if (!traits.includes("melee")) return false;
+            if (w.requires_equip) {
+                let hasReq = tempFighter.equipment.some(e => e.id === w.requires_equip || e.name === w.requires_equip);
+                if (!hasReq) return false;
             }
 
             if (isMercOrBeast) return w.specific_to === tempFighter.charId;
             if (isHiveScum) return w.is_hive_scum === true;
-            if (w.is_merc_weapon || w.default_for || w.requires_equip) return false;
+            if (w.is_merc_weapon) return false;
+            if (w.default_for) return false;
             if (w.specific_to && w.specific_to !== tempFighter.charId) return false;
 
-            return w.is_gang_weapon === true || w.specific_to === tempFighter.charId;
+            let isAllowedExclusive = charDef && charDef.allowed_weapons_exclusive && charDef.allowed_weapons_exclusive.includes(w.id);
+            return w.is_gang_weapon === true || w.specific_to === tempFighter.charId || isAllowedExclusive;
         });
 
         if (availableWeapons.length === 0) {
-            html += `<p style="color:#888; font-size:12px;">Aucune arme de clan disponible actuellement.</p>`;
+            html += `<p style="color:#888; font-size:12px;">Aucune arme ou amélioration disponible pour ce combattant.</p>`;
         } else {
             availableWeapons.forEach(w => {
                 let slotsNeeded = w.name.includes('*') ? 2 : 1;
-                let isAvailable = (usedSlots + slotsNeeded <= maxSlots);
+                let isAvailable = (usedSlots + slotsNeeded <= 3);
+
+                // Formatage du profil de l'arme
+                let prof = (w.profiles && w.profiles[0]) ? w.profiles[0] : null;
+                let statsText = prof ? `Portée: ${prof.SR}/${prof.LR} | F:${prof.S} | AP:${prof.AP} | D:${prof.L}${prof.traits ? ` | ${prof.traits}` : ''}` : '';
+
                 html += `
                     <div class="fighter-item ${!isAvailable ? 'disabled' : ''}">
-                        <span>${w.name} (${w.cost_credits||0}c) ${slotsNeeded === 2 ? '<em>(2 emplacements)</em>' : ''}</span>
+                        <div>
+                            <strong>${w.name}</strong> (${w.cost_credits||0}c) ${slotsNeeded === 2 ? '<em>(2 emplacements)</em>' : ''}
+                            ${statsText ? `<br><small style="color:#aaa; font-size:11px;">${statsText}</small>` : ''}
+                        </div>
                         ${isAvailable ? `<button onclick="addWeapon('${w.id}')">${isCampaign ? 'Acheter' : 'Ajouter'}</button>` : '<small>Emplacements insuffisants</small>'}
                     </div>
                 `;
@@ -1146,7 +1172,7 @@ function openWeaponSelectModal() {
         }
     }
 
-    openModal("Sélection d'Arme", html);
+    openModal("Sélection d'Arme / Option", html);
 }
 
 function swapMercWeapon(newWpnId, replaceWpnId, cost) {
@@ -1392,12 +1418,15 @@ function openEquipSelectModal() {
     });
 
     if (generalEquipments.length === 0) {
-        html += `<p style="color:#888; font-size:12px;">Aucun équipement de clan disponible actuellement.</p>`;
+        html += `<p style="color:#888; font-size:12px;">Aucun équipement disponible pour ce combattant.</p>`;
     } else {
         generalEquipments.forEach(e => {
             html += `
                 <div class="fighter-item">
-                    <span>${e.name} (${e.cost_credits||0}c) - <small>${e.type}</small></span>
+                    <div>
+                        <strong>${e.name}</strong> (${e.cost_credits||0}c) - <small style="color:var(--accent-purple);">${e.type}</small>
+                        ${e.effect ? `<br><small style="color:#aaa; font-size:11px;">${e.effect}</small>` : ''}
+                    </div>
                     <button onclick="addEquipment('${e.id}')">${isCampaign ? 'Acheter' : 'Équiper'}</button>
                 </div>
             `;
