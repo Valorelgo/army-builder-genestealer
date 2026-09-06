@@ -616,7 +616,7 @@ function updateTopBar() {
         return sum + itemCost;
     }, 0);
 
-    let gangWealth = gangRating + stashVal;
+    let gangWealth = gangRating + stashVal + (currentGang.credits || 0);
 
     let totalRep = typeof calculateGangReputation === 'function' 
         ? calculateGangReputation(currentGang) 
