@@ -151,7 +151,7 @@ function updateGameTopBar() {
         let itemCost = (typeof item === 'object') ? (item.cost || item.cost_credits || item.price || 0) : 0;
         return sum + itemCost;
     }, 0);
-    let gangWealth = gangRating + stashVal;
+    let gangWealth = gangRating + stashVal + (currentGang.credits || 0);
     let totalRep = typeof calculateGangReputation === 'function' ? calculateGangReputation(currentGang) : (currentGang.reputation || 1);
 
     topBar.innerHTML = `
